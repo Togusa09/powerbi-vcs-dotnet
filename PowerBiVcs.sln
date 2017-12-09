@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27004.2010
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerBiVcs", "PowerBiVcs\PowerBiVcs.csproj", "{FD52C09E-F514-4BEA-AAE6-7B690005A26C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerBi", "PowerBi\PowerBi.csproj", "{72E117BE-4314-488E-B067-45A52CF821F7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerBi.Tests", "PowerBi.Tests\PowerBi.Tests.csproj", "{0F661AEA-27D7-408C-B8C1-D6793F0B9FBD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FD52C09E-F514-4BEA-AAE6-7B690005A26C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD52C09E-F514-4BEA-AAE6-7B690005A26C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD52C09E-F514-4BEA-AAE6-7B690005A26C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD52C09E-F514-4BEA-AAE6-7B690005A26C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{72E117BE-4314-488E-B067-45A52CF821F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{72E117BE-4314-488E-B067-45A52CF821F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{72E117BE-4314-488E-B067-45A52CF821F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{72E117BE-4314-488E-B067-45A52CF821F7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0F661AEA-27D7-408C-B8C1-D6793F0B9FBD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0F661AEA-27D7-408C-B8C1-D6793F0B9FBD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0F661AEA-27D7-408C-B8C1-D6793F0B9FBD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0F661AEA-27D7-408C-B8C1-D6793F0B9FBD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D1C770A3-C148-40D5-A4A5-95A6A2F13112}
+	EndGlobalSection
+EndGlobal
