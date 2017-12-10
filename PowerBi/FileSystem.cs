@@ -8,6 +8,8 @@ namespace PowerBi
         Stream OpenFile(string path);
         ZipArchive OpenZipFile(string path);
         bool DirectoryExists(string path);
+        void CreateDirectory(string path);
+        void DeleteFile(string path);
     }
 
     public class FileSystem : IFileSystem
@@ -30,6 +32,16 @@ namespace PowerBi
         public bool DirectoryExists(string path)
         {
             return Directory.Exists(path);
+        }
+
+        public void CreateDirectory(string path)
+        {
+            Directory.CreateDirectory(path);
+        }
+
+        public void DeleteFile(string path)
+        {
+            File.Delete(path);
         }
     }
 }

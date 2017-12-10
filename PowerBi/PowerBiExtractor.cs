@@ -1,18 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Text;
 using System.Text.RegularExpressions;
+using PowerBi.Converters;
 
 namespace PowerBi
 {
-    public class pbivcs
+    public class PowerBiExtractor
     {
         private readonly IFileSystem _fileSystem;
-        private Dictionary<string, Converter> _converters;
+        private readonly Dictionary<string, Converter> _converters;
 
-        public pbivcs(IFileSystem fileSystem)
+        public PowerBiExtractor(IFileSystem fileSystem)
         {
             _fileSystem = fileSystem;
             _converters = new Dictionary<string, Converter>()
@@ -46,32 +46,41 @@ namespace PowerBi
             return new NoopConverter(_fileSystem);
         }
 
-        public void ExtractPbit(string path, string outdir, bool overwrite)
+        public void CompressPbit(string path, string outdir, bool overwrite)
         {
-            if (string.Compare(Path.GetExtension(path), ".pbit", StringComparison.OrdinalIgnoreCase) != 0)
-            {
-                throw new ArgumentException("File must be of type *.pbit", nameof(path));
-            }
+            throw new NotImplementedException();
+        }
 
-            if (_fileSystem.DirectoryExists(outdir))
+        public void WritePbitToScreen(string path)
+        {
+            var stringBuilder = new StringBuilder();
+            using (var zip = _fileSystem.OpenZipFile(path))
             {
-                if (overwrite)
+                foreach (var zipArchiveEntry in zip.Entries)
                 {
-                    var existingFiles = Directory.EnumerateFiles(outdir);
-                    foreach (var file in existingFiles)
+                    
+                    var converter = FindConverter(zipArchiveEntry.FullName);
+
+                    using (var zipStream = zipArchiveEntry.Open())
                     {
-                        File.Delete(file);
+                        var fileText = converter.WriteRawToConsoleText(zipStream);
+                        stringBuilder.AppendLine("Filename: " + zipArchiveEntry.FullName);
+                        stringBuilder.AppendLine(fileText);
                     }
                 }
-                else
-                {
-                    throw new Exception($"Output path \"{outdir}\" already exists");
-                }
             }
-            else
-            {
-                Directory.CreateDirectory(outdir);
-            }
+
+            Console.WriteLine(stringBuilder.ToString());
+        }
+
+        public void ExtractPbit(string path, string outdir, bool overwrite)
+        {
+            //if (string.Compare(Path.GetExtension(path), ".pbit", StringComparison.OrdinalIgnoreCase) != 0)
+            //{
+            //    throw new ArgumentException("File must be of type *.pbit", nameof(path));
+            //}
+
+            EnsureDestinationFolderExists(outdir, overwrite);
 
             var order = new List<string>();
             using (var zip = _fileSystem.OpenZipFile(path))
@@ -92,46 +101,30 @@ namespace PowerBi
                 writer.Write(string.Join("\n", order));
             }
         }
-    }
 
- 
-
-    public abstract class Converter
-    {
-        protected IFileSystem _fileSystem;
-
-        protected Converter(IFileSystem fileSystem)
+        private void EnsureDestinationFolderExists(string outdir, bool overwrite)
         {
-            _fileSystem = fileSystem;
-        }
-
-        public abstract Stream RawToVcs(Stream b);
-
-        public abstract Stream VcsToRaw(Stream b);
-
-        public virtual void WriteRawToVcs(Stream zipStream, string vcsPath)
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(vcsPath));
-
-            using (var file = _fileSystem.CreateNewFile(vcsPath))
+            if (_fileSystem.DirectoryExists(outdir))
             {
-                using (var outStream = RawToVcs(zipStream))
+                if (overwrite)
                 {
-                    file.Seek(0, SeekOrigin.Begin);
-                    //outStream.Seek(0, SeekOrigin.Begin);
-                    outStream.CopyTo(file);
-                    file.Flush();
-                }     
+                    var existingFiles = Directory.EnumerateFiles(outdir);
+                    foreach (var file in existingFiles)
+                    {
+                        _fileSystem.DeleteFile(file);
+                    }
+                }
+                else
+                {
+                    throw new Exception($"Output path \"{outdir}\" already exists");
+                }
+            }
+            else
+            {
+                _fileSystem.CreateDirectory(outdir);
             }
         }
 
-        public virtual void WriteVcsToRaw(string vcsPath, ZipArchive zipFile)
-        {
-            //var zipArchive = ZipFile.Open(vcsPath, ZipArchiveMode.Create);
-            if (File.Exists(vcsPath))
-            {
-                zipFile.CreateEntryFromFile(vcsPath, Path.GetFileName(vcsPath), CompressionLevel.NoCompression);
-            }
-        }
+        
     }
 }

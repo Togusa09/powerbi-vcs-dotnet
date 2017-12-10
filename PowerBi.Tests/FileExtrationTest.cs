@@ -13,7 +13,7 @@ namespace PowerBi.Tests
     public class FileExtrationTest
     {
         private StubFileSystem _fileSystem;
-        private pbivcs _extractor;
+        private PowerBiExtractor _extractor;
 
         [Fact]
         public void CanExtractResourcesFromAPBitFile()
@@ -44,7 +44,7 @@ namespace PowerBi.Tests
         private void ANewPowerBiExtractor()
         {
             _fileSystem = new StubFileSystem();
-            _extractor = new pbivcs(_fileSystem);
+            _extractor = new PowerBiExtractor(_fileSystem);
         }
     }
 }

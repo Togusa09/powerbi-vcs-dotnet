@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Text;
+using PowerBi.Converters;
 using Shouldly;
 using TestStack.BDDfy;
 using TestStack.BDDfy.Scanners.StepScanners.Fluent;

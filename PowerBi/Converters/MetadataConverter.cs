@@ -3,7 +3,7 @@ using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace PowerBi
+namespace PowerBi.Converters
 {
     public class MetadataConverter : Converter
     {
@@ -48,8 +48,18 @@ namespace PowerBi
             return outputStream;
         }
 
+        public override string RawToConsoleText(Stream b)
+        {
+            using (var stream = RawToVcs(b))
+            using(var reader = new StreamReader(stream))
+            {
+                return reader.ReadToEnd();
+            }
+        }
+
         public MetadataConverter(IFileSystem fileSystem) : base(fileSystem)
         {
+            
         }
     }
 }

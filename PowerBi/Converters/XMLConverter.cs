@@ -2,7 +2,7 @@
 using System.Text;
 using System.Xml;
 
-namespace PowerBi
+namespace PowerBi.Converters
 {
     public class XMLConverter : Converter
     {
@@ -75,6 +75,18 @@ namespace PowerBi
 
 
             return enc;
+        }
+
+        public override string RawToConsoleText(Stream b)
+        {
+            XmlDocument doc = new XmlDocument();
+            doc.Load(b);
+
+            var writer = new StringWriter();
+            var textWriter = new XmlTextWriter(writer);
+            textWriter.Formatting = Formatting.Indented;
+            doc.WriteTo(textWriter);
+            return writer.ToString();
         }
     }
 }

@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
+using PowerBi.Converters;
 using Shouldly;
 using Xunit;
 
@@ -59,7 +60,7 @@ namespace PowerBi.Tests
             return _files.Any(x => x.Key == path && x.Value == null);
         }
 
-        public void CreateDirectionry(string path)
+        public void CreateDirectory(string path)
         {
             if (Path.HasExtension(path))
             {
@@ -67,6 +68,11 @@ namespace PowerBi.Tests
             }
 
             _files.Add(path,  null);
+        }
+
+        public void DeleteFile(string path)
+        {
+            _files.Remove(path);
         }
 
 
@@ -113,7 +119,7 @@ namespace PowerBi.Tests
         [InlineData("test.json", typeof(JsonConverter))]
         public void FindConverterReturnsTheExpectedConverter(string path, Type converterType)
         {
-            var vcs = new pbivcs(new StubFileSystem());
+            var vcs = new PowerBiExtractor(new StubFileSystem());
             vcs.FindConverter(path).GetType().ShouldBe(converterType);
         }
     }

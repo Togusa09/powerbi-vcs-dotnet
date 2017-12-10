@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace PowerBi
+namespace PowerBi.Converters
 {
     public static class StringExtensions
     {

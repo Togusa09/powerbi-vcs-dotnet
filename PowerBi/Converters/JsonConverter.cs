@@ -2,7 +2,7 @@
 using System.Text;
 using Newtonsoft.Json;
 
-namespace PowerBi
+namespace PowerBi.Converters
 {
     public class JsonConverter : Converter
     {
@@ -36,6 +36,29 @@ namespace PowerBi
             memoryStream.Seek(0, SeekOrigin.Begin);
 
             return memoryStream;
+        }
+
+        public override string RawToConsoleText(Stream b)
+        {
+            var streamReader = new StreamReader(b, _encoding);
+            var reader = new JsonTextReader(streamReader);
+
+            var settings = new JsonSerializerSettings
+            {
+                DateTimeZoneHandling = DateTimeZoneHandling.RoundtripKind,
+                DateParseHandling = DateParseHandling.DateTimeOffset,
+                Formatting = Formatting.Indented
+            };
+
+            var serialiser = new JsonSerializer
+            {
+                DateTimeZoneHandling = DateTimeZoneHandling.RoundtripKind,
+                DateParseHandling = DateParseHandling.DateTimeOffset,
+                Formatting = Formatting.Indented
+            };
+            var obj = serialiser.Deserialize(reader);
+
+            return JsonConvert.SerializeObject(obj, settings);
         }
 
         public override Stream VcsToRaw(Stream b)
