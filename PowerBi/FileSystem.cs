@@ -10,6 +10,7 @@ namespace PowerBi
         bool DirectoryExists(string path);
         void CreateDirectory(string path);
         void DeleteFile(string path);
+        bool FileExists(string path);
     }
 
     public class FileSystem : IFileSystem
@@ -42,6 +43,11 @@ namespace PowerBi
         public void DeleteFile(string path)
         {
             File.Delete(path);
+        }
+
+        public bool FileExists(string path)
+        {
+            return File.Exists(path);
         }
     }
 }

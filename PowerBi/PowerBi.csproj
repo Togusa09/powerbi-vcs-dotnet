@@ -46,7 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Converters\Converter.cs" />
-    <Compile Include="DataMashupConverter.cs" />
+    <Compile Include="Converters\DataMashupConverter.cs" />
     <Compile Include="FileSystem.cs" />
     <Compile Include="Converters\JsonConverter.cs" />
     <Compile Include="Converters\MetadataConverter.cs" />

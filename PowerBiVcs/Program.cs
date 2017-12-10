@@ -9,6 +9,11 @@ namespace PowerBiVcs
     {
         static void Main(string[] args)
         {
+            var fileSystem = new FileSystem();
+            var extractor = new PowerBiExtractor(fileSystem);
+            extractor.ExtractPbit("Files\\Template.pbit", "Out1", true);
+            extractor.CompressPbit("Out1", "Files\\Template2.pbit",true);
+
             var options = new CommandLineOptions();
             var result = Parser.Default.ParseArguments<CommandLineOptions>(args)
                 .WithParsed(x => options = x);
@@ -25,8 +30,7 @@ namespace PowerBiVcs
                 return;
             }
 
-            var fileSystem = new FileSystem();
-            var extractor = new PowerBiExtractor(fileSystem);
+            
 
             if (options.ExtractToVcs)
             {
@@ -46,10 +50,6 @@ namespace PowerBiVcs
                     Console.ReadLine();
                 }
             }
-
-
-            //extractor.ExtractPbit("Files\\Template.pbit", "Out1", true);
-            //extractor.ExtractPbit("Files\\Report.pbix", "Out2", true);
         }
     }
 }

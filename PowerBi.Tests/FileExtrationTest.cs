@@ -19,9 +19,20 @@ namespace PowerBi.Tests
         public void CanExtractResourcesFromAPBitFile()
         {
             this.Given(s => s.ANewPowerBiExtractor())
-                .And(s => s.AFileThatExists("Template.pbit"))
-                .When(s => s.TheExtractProcessIsRun())
+                    .And(s => s.AFileThatExists("Template.pbit"))
+                .When(s => s.TheExtractProcessIsRun("Template.pbit", "Output"))
                 .Then(s => s.AllTheFilesAreCreated())
+                .BDDfy();
+        }
+
+        [Fact]
+        public void CanExtractAndRecompressAFile()
+        {
+            this.Given(s => s.ANewPowerBiExtractor())
+                .And(s => s.AFileThatExists("Template.pbit"))
+                .When(s => s.TheExtractProcessIsRun("Template.pbit", "Output"))
+                    .And(s => s.TheCompressionProcessIsRun("Output", "Template2.pbit"))
+                .Then(s => s.TheFileIsCreated("Template2.pbit"))
                 .BDDfy();
         }
 
@@ -31,9 +42,19 @@ namespace PowerBi.Tests
             files.ShouldNotBeEmpty();
         }
 
-        private void TheExtractProcessIsRun()
+        private void TheFileIsCreated(string filename)
         {
-            _extractor.ExtractPbit("Template.pbit", "Output", true);
+             _fileSystem.ListFiles().ShouldContain(filename);
+        }
+
+        private void TheExtractProcessIsRun(string input, string output)
+        {
+            _extractor.ExtractPbit(input, output, true);
+        }
+
+        private void TheCompressionProcessIsRun(string input, string output)
+        {
+            _extractor.CompressPbit(input, output, true);
         }
 
         private void AFileThatExists(string templatePbit)

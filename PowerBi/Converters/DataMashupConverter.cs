@@ -84,17 +84,13 @@ namespace PowerBi
             //zip up the header bytes
             var stream = new MemoryStream();
             var zipStream = new MemoryStream();
-            using (var zip = new ZipArchive(zipStream))
+            using (var zip = new ZipArchive(zipStream, ZipArchiveMode.Create, true))
             {
                 var order = File.ReadAllLines(vcsdir + ".zo");
                 foreach (var name in order)
                 {
                     var converter = FindConverter(name);
-                    using (var file = _fileSystem.OpenFile(name))
-                    {
-                        var entry = zip.CreateEntry(name, CompressionLevel.NoCompression);
-                        converter.WriteVcsToRaw(Path.Combine(vcsdir, name), zip );
-                    }
+                    converter.WriteVcsToRaw(Path.Combine(vcsdir, name), zip );
                 }
             }
 

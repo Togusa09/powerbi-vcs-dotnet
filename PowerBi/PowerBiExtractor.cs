@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Text;
 using System.Text.RegularExpressions;
 using PowerBi.Converters;
@@ -46,9 +47,48 @@ namespace PowerBi
             return new NoopConverter(_fileSystem);
         }
 
-        public void CompressPbit(string path, string outdir, bool overwrite)
+        public void CompressPbit(string extractedPath, string compressedPath, bool overwrite)
         {
-            throw new NotImplementedException();
+            if (_fileSystem.FileExists(compressedPath))
+            {
+                if (overwrite)
+                {
+                    _fileSystem.DeleteFile(compressedPath);
+                }
+                else
+                {
+                    throw new Exception($"Output path {extractedPath} already exists.");
+                }
+            }
+
+            // Get order
+            var order = new List<string>();
+            using (var file = _fileSystem.OpenFile(extractedPath + ".zo"))
+            using (var reader = new StreamReader(file))
+            {
+                while (!reader.EndOfStream)
+                {
+                    order.Add(reader.ReadLine());
+                }
+            }
+
+            using (var zipStream = _fileSystem.CreateNewFile(compressedPath))
+            {
+                var zip = new ZipArchive(zipStream, ZipArchiveMode.Create);
+                foreach (var name in order)
+                {
+                    var converter = FindConverter(name);
+                    //var file = _fileSystem.OpenFile(Path.Combine(extractedPath, name));
+                    //var entry = zip.CreateEntry(name, CompressionLevel.NoCompression);
+
+                    converter.WriteVcsToRaw(Path.Combine(extractedPath, name), zip);
+
+                    //using (var entryStream = entry.Open())
+                    //{
+                        
+                    //}
+                }
+            }
         }
 
         public void WritePbitToScreen(string path)

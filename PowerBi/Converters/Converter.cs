@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.IO.Compression;
 using System.Text;
 
@@ -38,7 +39,11 @@ namespace PowerBi.Converters
         {
             if (File.Exists(vcsPath))
             {
-                zipFile.CreateEntryFromFile(vcsPath, Path.GetFileName(vcsPath), CompressionLevel.NoCompression);
+                zipFile.CreateEntryFromFile(vcsPath, Path.GetFileName(vcsPath));
+            }
+            else
+            {
+                throw new Exception($"File {vcsPath} does not exist");
             }
         }
 

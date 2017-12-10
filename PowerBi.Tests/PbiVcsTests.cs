@@ -75,6 +75,11 @@ namespace PowerBi.Tests
             _files.Remove(path);
         }
 
+        public bool FileExists(string path)
+        {
+            return _files.Any(x => x.Key == path && x.Value != null);
+        }
+
 
         public void DeleteDirectory(string path)
         {
