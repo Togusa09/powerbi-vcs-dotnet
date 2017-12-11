@@ -63,7 +63,7 @@ namespace PowerBi
 
             // Get order
             var order = new List<string>();
-            using (var file = _fileSystem.OpenFile(extractedPath + ".zo"))
+            using (var file = _fileSystem.OpenFile(Path.Combine(extractedPath, ".zo")))
             using (var reader = new StreamReader(file))
             {
                 while (!reader.EndOfStream)
@@ -127,7 +127,7 @@ namespace PowerBi
                 }
             }
 
-            using (var file = _fileSystem.CreateNewFile(outdir + ".zo"))
+            using (var file = _fileSystem.CreateNewFile(Path.Combine(outdir, ".zo")))
             using (var writer = new StreamWriter(file))
             {
                 writer.Write(string.Join("\n", order));
