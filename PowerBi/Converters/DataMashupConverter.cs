@@ -64,7 +64,7 @@ namespace PowerBi
                 }
             }
 
-            using (var file = _fileSystem.CreateNewFile(vcsPath + ".zo"))
+            using (var file = _fileSystem.CreateNewFile(Path.Combine(vcsPath, ".zo")))
             using (var writer = new StreamWriter(file))
             {
                 writer.Write(string.Join("\n", order));
@@ -86,7 +86,7 @@ namespace PowerBi
             var zipStream = new MemoryStream();
             using (var zip = new ZipArchive(zipStream, ZipArchiveMode.Create, true))
             {
-                var order = File.ReadAllLines(vcsdir + ".zo");
+                var order = File.ReadAllLines(Path.Combine(vcsdir, ".zo"));
                 foreach (var name in order)
                 {
                     var converter = FindConverter(name);
@@ -96,7 +96,6 @@ namespace PowerBi
 
             //Write header
             stream.Write(new byte[] { 0x00, 0x00, 0x00, 0x00},0, 4);
-            //var streamWriter = new StreamWriter(stream);
             var writer = new BinaryWriter(stream);
 
             //write zip
@@ -193,8 +192,6 @@ namespace PowerBi
         {
             throw new System.NotImplementedException();
         }
-
-
 
         public Converter FindConverter(string path)
         {

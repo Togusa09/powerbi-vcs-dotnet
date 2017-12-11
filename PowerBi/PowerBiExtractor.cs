@@ -78,15 +78,7 @@ namespace PowerBi
                 foreach (var name in order)
                 {
                     var converter = FindConverter(name);
-                    //var file = _fileSystem.OpenFile(Path.Combine(extractedPath, name));
-                    //var entry = zip.CreateEntry(name, CompressionLevel.NoCompression);
-
                     converter.WriteVcsToRaw(Path.Combine(extractedPath, name), zip);
-
-                    //using (var entryStream = entry.Open())
-                    //{
-                        
-                    //}
                 }
             }
         }
@@ -164,7 +156,5 @@ namespace PowerBi
                 _fileSystem.CreateDirectory(outdir);
             }
         }
-
-        
     }
 }
