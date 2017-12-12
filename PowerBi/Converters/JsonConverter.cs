@@ -101,6 +101,7 @@ namespace PowerBi.Converters
             var streamWriter = new StreamWriter(memoryStream);
             var writer = new JsonTextWriter(streamWriter);
             serialiser.Formatting = Formatting.Indented;
+
             serialiser.Serialize(writer, obj);
 
             writer.Flush();
@@ -149,7 +150,7 @@ namespace PowerBi.Converters
             var memoryStream = new MemoryStream();
             var streamWriter = new StreamWriter(memoryStream);
             var writer = new JsonTextWriter(streamWriter);
-            
+
             serialiser.Serialize(writer, obj);
 
             writer.Flush();

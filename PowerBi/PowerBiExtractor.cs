@@ -140,11 +140,12 @@ namespace PowerBi
             {
                 if (overwrite)
                 {
-                    var existingFiles = Directory.EnumerateFiles(outdir);
-                    foreach (var file in existingFiles)
-                    {
-                        _fileSystem.DeleteFile(file);
-                    }
+                    Directory.Delete(outdir, true);
+                    //var existingFiles = Directory.EnumerateFiles(outdir);
+                    //foreach (var file in existingFiles)
+                    //{
+                    //    _fileSystem.DeleteFile(file);
+                    //}
                 }
                 else
                 {
