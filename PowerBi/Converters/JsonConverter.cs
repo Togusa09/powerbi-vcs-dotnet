@@ -54,8 +54,11 @@ namespace PowerBi.Converters
                         var value = JToken.Parse(jtoken.Value<string>());
                         if (value.Type == JTokenType.Array || value.Type == JTokenType.Object)
                         {
-                            var prop = new JProperty(this.EMBEDDED_JSON_KEY, value);
-                            jtoken.Parent.Replace(prop);
+                            var parent = jtoken.Parent as JProperty;
+                            var jobj = new JObject {{this.EMBEDDED_JSON_KEY, value}};
+                            var prop = new JProperty(parent.Name, jobj);
+                            parent.Replace(prop);
+                            //prop1.Value.Replace(jobj);
                         }
                     }
                     catch
