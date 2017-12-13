@@ -78,16 +78,70 @@ namespace PowerBi.Converters
         {
             b.Seek(0, SeekOrigin.Begin);
 
-            var streamReader = new StreamReader(b, Encoding.ASCII);
-            var content = streamReader.ReadToEnd();
+            var streamReader = new StreamReader(b);
+
+            var section1 = new List<SectionEntry>();
+            var section2 = new List<SectionEntry>();
+            var section3 = new List<string>();
+
+            int section = 0;
+            while (!streamReader.EndOfStream)
+            {
+                var line = streamReader.ReadLine();
+                if (line == "Section 1") { section = 1; continue; }
+                if (line == "Section 2") { section = 2; continue; }
+                if (line == "Section 3") { section = 3; continue; }
+
+                var split = line.Split(':');
+
+                if (section == 1)
+                {
+                    section1.Add(new SectionEntry {Name = split[0], Key = Guid.Parse(split[1].Trim())});
+                }
+                if (section == 2)
+                {
+                    section2.Add(new SectionEntry { Name = split[0], Key = Guid.Parse(split[1].Trim()) });
+                }
+                if (section == 3)
+                {
+                    section3.Add(line);
+                }
+
+            }
 
             var outputStream = new MemoryStream();
-            var streamWriter = new StreamWriter(outputStream, Encoding.ASCII);
+            var binaryWriter = new BinaryWriter(outputStream);
 
-            streamWriter.Write(content.Replace("\r", "").Replace("\n", ""));
+            binaryWriter.Write(new byte[] {0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 });
+            binaryWriter.Write(section1.Count);
+            foreach (var t in section1)
+            {
+                WriteOutString(binaryWriter, t.Name);
+                WriteOutString(binaryWriter, t.Key.ToString());
+            }
 
-            streamWriter.Flush();
+            binaryWriter.Write(section2.Count);
+            foreach (var t in section2)
+            {
+                WriteOutString(binaryWriter, t.Key.ToString());
+                WriteOutString(binaryWriter, t.Name);
+            }
+
+            binaryWriter.Write((byte)0x00);
+            binaryWriter.Write((byte)section3.Count);
+            foreach (var t in section3)
+            {
+                WriteOutString(binaryWriter, t);
+            }
+            
+            outputStream.Flush();
             return outputStream;
+        }
+
+        private void WriteOutString(BinaryWriter writer, string s)
+        {
+            writer.Write((byte)s.Length);
+            writer.Write(s);
         }
 
         public override string RawToConsoleText(Stream b)

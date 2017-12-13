@@ -29,7 +29,12 @@ namespace PowerBi
             memoryStream.Seek(0, SeekOrigin.Begin);
             var binaryReader = new BinaryReader(memoryStream);
 
-            binaryReader.ReadBytes(4);
+            var startingBytes = binaryReader.ReadBytes(4);
+            if (startingBytes != new Byte[] {0x00, 0x00, 0x00, 0x00})
+            {
+                throw new Exception("TODO");
+            }
+
             var len1 = binaryReader.ReadInt32();
             var zip1 = binaryReader.ReadBytes(len1);
 
@@ -43,7 +48,7 @@ namespace PowerBi
             {
                 throw new Exception("TODO");
             }
-            var xml2 = binaryReader.ReadBytes(len3a);
+            var xml2 = binaryReader.ReadBytes(len3b);
             var extra = binaryReader.ReadBytes((int)(memoryStream.Length - memoryStream.Position));
 
             var zip1Stream = new MemoryStream(zip1);
@@ -81,6 +86,8 @@ namespace PowerBi
         {
             //zip up the header bytes
             var stream = new MemoryStream();
+            var writer = new BinaryWriter(stream);
+
             var zipStream = new MemoryStream();
             using (var zip = new ZipArchive(zipStream, ZipArchiveMode.Create, true))
             {
@@ -93,9 +100,8 @@ namespace PowerBi
             }
 
             //Write header
-            stream.Write(new byte[] { 0x00, 0x00, 0x00, 0x00},0, 4);
-            var writer = new BinaryWriter(stream);
-
+            writer.Write(new byte[] { 0x00, 0x00, 0x00, 0x00});
+            
             //write zip
             zipStream.Flush();
             zipStream.Seek(0, SeekOrigin.Begin);
@@ -121,7 +127,7 @@ namespace PowerBi
 
         public override Stream RawToVcs(Stream b)
         {
-            throw new NotImplementedException();
+            throw new System.NotImplementedException();
         }
 
         public override string RawToConsoleText(Stream zipStream)
