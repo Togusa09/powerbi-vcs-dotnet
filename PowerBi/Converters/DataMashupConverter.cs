@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using PowerBi.Converters;
@@ -27,26 +26,25 @@ namespace PowerBi
         {
             var memoryStream = new MemoryStream();
             zipStream.CopyTo(memoryStream);
-            var bytes = memoryStream.ToArray();
+            memoryStream.Seek(0, SeekOrigin.Begin);
+            var binaryReader = new BinaryReader(memoryStream);
 
-            var len1 = BitConverter.ToInt32(bytes, 4);
-            var start1 = 8;
-            var zip1 = bytes.Skip(start1).Take(len1).ToArray();
+            binaryReader.ReadBytes(4);
+            var len1 = binaryReader.ReadInt32();
+            var zip1 = binaryReader.ReadBytes(len1);
 
-            var start2 = start1 + len1 + 4;
-            var len2 = BitConverter.ToInt32(bytes, start1 + len1);
-            var xml1 = bytes.Skip(start2).Take(len2).ToArray();
+            var len2 = binaryReader.ReadInt32();
+            var xml1 = binaryReader.ReadBytes(len2);
 
-            var b8 = bytes.Skip(start2 + len2).Take(8).ToArray();
-            var start3 = start2 + len2 + 12;
-            var len3 = BitConverter.ToInt32(bytes, start2 + len2 + 8);
-            if (BitConverter.ToInt32(bytes, start2 + len2) - len3 != 34)
+            var len3a = binaryReader.ReadInt32();
+            binaryReader.ReadBytes(4);
+            var len3b = binaryReader.ReadInt32();
+            if (len3a - len3b != 34)
             {
                 throw new Exception("TODO");
             }
-
-            var xml2 = bytes.Skip(start3).Take(len3).ToArray();
-            var extra = bytes.Skip(start3 + len3).ToArray();
+            var xml2 = binaryReader.ReadBytes(len3a);
+            var extra = binaryReader.ReadBytes((int)(memoryStream.Length - memoryStream.Position));
 
             var zip1Stream = new MemoryStream(zip1);
             zip1Stream.Seek(0, SeekOrigin.Begin);
@@ -121,7 +119,6 @@ namespace PowerBi
             new NoopConverter(_fileSystem).WriteVcsToRaw(Path.Combine(vcsdir, "7.bytes"), zipFile);
         }
 
-
         public override Stream RawToVcs(Stream b)
         {
             throw new NotImplementedException();
@@ -133,26 +130,26 @@ namespace PowerBi
 
             var memoryStream = new MemoryStream();
             zipStream.CopyTo(memoryStream);
-            var bytes = memoryStream.ToArray();
+            memoryStream.Seek(0, SeekOrigin.Begin);
+            var binaryReader = new BinaryReader(memoryStream);
 
-            var len1 = BitConverter.ToInt32(bytes, 4);
-            var start1 = 8;
-            var zip1 = bytes.Skip(start1).Take(len1).ToArray();
+            binaryReader.ReadBytes(4);
+            var len1 = binaryReader.ReadInt32();
+            var zip1 = binaryReader.ReadBytes(len1);
 
-            var start2 = start1 + len1 + 4;
-            var len2 = BitConverter.ToInt32(bytes, start1 + len1);
-            var xml1 = bytes.Skip(start2).Take(len2).ToArray();
+            var len2 = binaryReader.ReadInt32();
+            var xml1 = binaryReader.ReadBytes(len2);
 
-            var b8 = bytes.Skip(start2 + len2).Take(8).ToArray();
-            var start3 = start2 + len2 + 12;
-            var len3 = BitConverter.ToInt32(bytes, start2 + len2 + 8);
-            if (BitConverter.ToInt32(bytes, start2 + len2) - len3 != 34)
+            var len3a = binaryReader.ReadInt32();
+            binaryReader.ReadBytes(4);
+            var len3b = binaryReader.ReadInt32();
+            if (len3a - len3b != 34)
             {
                 throw new Exception("TODO");
             }
 
-            var xml2 = bytes.Skip(start3).Take(len3).ToArray();
-            var extra = bytes.Skip(start3 + len3).ToArray();
+            var xml2 = binaryReader.ReadBytes(len3a);
+            var extra = binaryReader.ReadBytes((int)(memoryStream.Length - memoryStream.Position));
 
             var zip1Stream = new MemoryStream(zip1);
             zip1Stream.Seek(0, SeekOrigin.Begin);

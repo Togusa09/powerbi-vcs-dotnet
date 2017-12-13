@@ -71,7 +71,6 @@ namespace PowerBi.Converters
                 streamWriter.WriteLine(entry);
             }
 
-
             return outputStream;
         }
 
