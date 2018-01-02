@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Abstractions;
 using System.IO.Compression;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using PowerBi.Converters;
@@ -30,7 +32,7 @@ namespace PowerBi
             var binaryReader = new BinaryReader(memoryStream);
 
             var startingBytes = binaryReader.ReadBytes(4);
-            if (startingBytes != new Byte[] {0x00, 0x00, 0x00, 0x00})
+            if (!startingBytes.SequenceEqual(new Byte[] {0x00, 0x00, 0x00, 0x00}))
             {
                 throw new Exception("TODO");
             }
@@ -161,7 +163,7 @@ namespace PowerBi
             zip1Stream.Seek(0, SeekOrigin.Begin);
 
             var order = new List<string>();
-            using (var zip = new ZipArchive(zip1Stream))
+            using (var zip = new ZipArchive(zip1Stream, ZipArchiveMode.Read))
             {
                 foreach (var zipArchiveEntry in zip.Entries)
                 {

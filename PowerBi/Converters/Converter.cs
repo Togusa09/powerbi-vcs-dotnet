@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.IO.Abstractions;
 using System.IO.Compression;
 using System.Text;
 
@@ -24,7 +25,7 @@ namespace PowerBi.Converters
         {
             Directory.CreateDirectory(Path.GetDirectoryName(vcsPath));
 
-            using (var file = _fileSystem.CreateNewFile(vcsPath))
+            using (var file = _fileSystem.File.Create(vcsPath))
             {
                 using (var outStream = RawToVcs(zipStream))
                 {
@@ -39,7 +40,16 @@ namespace PowerBi.Converters
         {
             if (File.Exists(vcsPath))
             {
-                zipFile.CreateEntryFromFile(vcsPath, Path.GetFileName(vcsPath));
+                var entry = zipFile.CreateEntry(vcsPath, CompressionLevel.Fastest);
+                using (var stream = entry.Open())
+                {
+                    using (var file = _fileSystem.File.Open(vcsPath, FileMode.Open))
+                    {
+                        file.CopyTo(stream);
+                    }
+                }
+
+                zipFile.CreateEntryFromFile(vcsPath, Path.GetFileName(vcsPath), CompressionLevel.Fastest);
             }
             else
             {

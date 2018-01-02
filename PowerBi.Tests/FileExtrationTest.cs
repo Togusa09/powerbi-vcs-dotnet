@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO.Abstractions.TestingHelpers;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Shouldly;
@@ -12,7 +14,7 @@ namespace PowerBi.Tests
 {
     public class FileExtrationTest
     {
-        private StubFileSystem _fileSystem;
+        private MockFileSystem _fileSystem;
         private PowerBiExtractor _extractor;
 
         [Fact]
@@ -38,13 +40,13 @@ namespace PowerBi.Tests
 
         private void AllTheFilesAreCreated()
         {
-            var files = _fileSystem.ListFiles();
+            var files = _fileSystem.AllFiles;
             files.ShouldNotBeEmpty();
         }
 
         private void TheFileIsCreated(string filename)
         {
-             _fileSystem.ListFiles().ShouldContain(filename);
+             _fileSystem.AllFiles.ShouldContain(filename);
         }
 
         private void TheExtractProcessIsRun(string input, string output)
@@ -59,12 +61,12 @@ namespace PowerBi.Tests
 
         private void AFileThatExists(string templatePbit)
         {
-            _fileSystem.AddEmbeddedFile("Template.pbit", "Template.pbit");
+            _fileSystem.AddFileFromEmbeddedResource("PowerBi.Tests.Files.Template.pbit", Assembly.GetExecutingAssembly(), "Template.pbit");
         }
 
         private void ANewPowerBiExtractor()
         {
-            _fileSystem = new StubFileSystem();
+            _fileSystem = new MockFileSystem();
             _extractor = new PowerBiExtractor(_fileSystem);
         }
     }

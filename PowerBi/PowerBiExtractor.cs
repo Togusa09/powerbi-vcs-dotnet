@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Abstractions;
 using System.IO.Compression;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -49,11 +50,11 @@ namespace PowerBi
 
         public void CompressPbit(string extractedPath, string compressedPath, bool overwrite)
         {
-            if (_fileSystem.FileExists(compressedPath))
+            if (_fileSystem.File.Exists(compressedPath))
             {
                 if (overwrite)
                 {
-                    _fileSystem.DeleteFile(compressedPath);
+                    _fileSystem.File.Delete(compressedPath);
                 }
                 else
                 {
@@ -63,7 +64,7 @@ namespace PowerBi
 
             // Get order
             var order = new List<string>();
-            using (var file = _fileSystem.OpenFile(Path.Combine(extractedPath, ".zo")))
+            using (var file = _fileSystem.File.Open(Path.Combine(extractedPath, ".zo"), FileMode.Open))
             using (var reader = new StreamReader(file))
             {
                 while (!reader.EndOfStream)
@@ -72,7 +73,7 @@ namespace PowerBi
                 }
             }
 
-            using (var zipStream = _fileSystem.CreateNewFile(compressedPath))
+            using (var zipStream = _fileSystem.File.Create(compressedPath))
             {
                 var zip = new ZipArchive(zipStream, ZipArchiveMode.Create);
                 foreach (var name in order)
@@ -80,24 +81,28 @@ namespace PowerBi
                     var converter = FindConverter(name);
                     converter.WriteVcsToRaw(Path.Combine(extractedPath, name), zip);
                 }
+                zipStream.Flush();
             }
         }
 
         public void WritePbitToScreen(string path)
         {
             var stringBuilder = new StringBuilder();
-            using (var zip = _fileSystem.OpenZipFile(path))
+            using (var fileStream = _fileSystem.File.OpenRead(path))
             {
-                foreach (var zipArchiveEntry in zip.Entries)
+                using (var zip = new ZipArchive(fileStream, ZipArchiveMode.Read))
                 {
-                    
-                    var converter = FindConverter(zipArchiveEntry.FullName);
-
-                    using (var zipStream = zipArchiveEntry.Open())
+                    foreach (var zipArchiveEntry in zip.Entries)
                     {
-                        var fileText = converter.WriteRawToConsoleText(zipStream);
-                        stringBuilder.AppendLine("Filename: " + zipArchiveEntry.FullName);
-                        stringBuilder.AppendLine(fileText);
+
+                        var converter = FindConverter(zipArchiveEntry.FullName);
+
+                        using (var zipStream = zipArchiveEntry.Open())
+                        {
+                            var fileText = converter.WriteRawToConsoleText(zipStream);
+                            stringBuilder.AppendLine("Filename: " + zipArchiveEntry.FullName);
+                            stringBuilder.AppendLine(fileText);
+                        }
                     }
                 }
             }
@@ -115,28 +120,33 @@ namespace PowerBi
             EnsureDestinationFolderExists(outdir, overwrite);
 
             var order = new List<string>();
-            using (var zip = _fileSystem.OpenZipFile(path))
-            {
-                foreach (var zipArchiveEntry in zip.Entries)
-                {
-                    order.Add(zipArchiveEntry.FullName);
-                    var outpath = Path.Combine(outdir, zipArchiveEntry.FullName);
-                    var converter = FindConverter(zipArchiveEntry.FullName);
 
-                    converter.WriteRawToVcs(zipArchiveEntry.Open(), outpath);
+            using (var fileStream = _fileSystem.File.Open(path, FileMode.Open))
+            {
+                using (var zip = new ZipArchive(fileStream))
+                {
+                    foreach (var zipArchiveEntry in zip.Entries)
+                    {
+                        order.Add(zipArchiveEntry.FullName);
+                        var outpath = Path.Combine(outdir, zipArchiveEntry.FullName);
+                        var converter = FindConverter(zipArchiveEntry.FullName);
+
+                        converter.WriteRawToVcs(zipArchiveEntry.Open(), outpath);
+                    }
                 }
             }
 
-            using (var file = _fileSystem.CreateNewFile(Path.Combine(outdir, ".zo")))
+            using (var file = _fileSystem.File.Create(Path.Combine(outdir, ".zo")))
             using (var writer = new StreamWriter(file))
             {
                 writer.Write(string.Join("\n", order));
+                writer.Flush();
             }
         }
 
         private void EnsureDestinationFolderExists(string outdir, bool overwrite)
         {
-            if (_fileSystem.DirectoryExists(outdir))
+            if (_fileSystem.Directory.Exists(outdir))
             {
                 if (overwrite)
                 {
@@ -154,7 +164,7 @@ namespace PowerBi
             }
             else
             {
-                _fileSystem.CreateDirectory(outdir);
+                _fileSystem.Directory.CreateDirectory(outdir);
             }
         }
     }

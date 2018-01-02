@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO.Abstractions;
 using CommandLine;
 using PowerBi;
 
@@ -11,8 +12,8 @@ namespace PowerBiVcs
         {
             var fileSystem = new FileSystem();
             var extractor = new PowerBiExtractor(fileSystem);
-            //extractor.ExtractPbit("Files\\Template.pbit", "TemplateVcs", true);
-            //extractor.CompressPbit("Out1", "Files\\Template2.pbit",true);
+            extractor.ExtractPbit("Files\\Template.pbit", "TemplateVcs", true);
+            extractor.CompressPbit("TemplateVcs", "Files\\Template2.pbit",true);
 
             var options = new CommandLineOptions();
             var result = Parser.Default.ParseArguments<CommandLineOptions>(args)
@@ -29,8 +30,6 @@ namespace PowerBiVcs
                 Console.WriteLine("Error! Output is required for extraction and compression");
                 return;
             }
-
-            
 
             if (options.ExtractToVcs)
             {
