@@ -20,6 +20,9 @@ namespace PowerBi.Converters
             _encoding = encoding;
         }
 
+        // So not threadsafe...
+        private int _depth = 0;
+
         /// <summary>
         /// Some pbit json has embedded json strings. To aid readability and diffs etc., we make sure we load and format
         ///these too.To make sure we're aware of this, we follow the encoding:
@@ -36,44 +39,58 @@ namespace PowerBi.Converters
         /// <param name="v"></param>
         private void JsonifyEmbeddedJson(Object obj)
         {
-            if (obj is JObject)
+            _depth++;
+            if (_depth > 1000)
             {
-                var jobj = obj as JObject;
-                foreach (var t in jobj.Properties().ToList())
-                {
-                    JsonifyEmbeddedJson(t.Value);
-                }
-                
+                throw new Exception("Max json depth exceeded");
             }
-            else if (obj is JToken)
+
+            try
             {
-                var jtoken = obj as JToken;
-                if (jtoken.Type == JTokenType.String)
+                if (obj is JObject)
                 {
-                    try
+                    var jobj = obj as JObject;
+                    foreach (var t in jobj.Properties().ToList())
                     {
-                        var value = JToken.Parse(jtoken.Value<string>());
-                        if (value.Type == JTokenType.Array || value.Type == JTokenType.Object)
+                        JsonifyEmbeddedJson(t.Value);
+                    }
+
+                }
+                else if (obj is JToken)
+                {
+                    var jtoken = obj as JToken;
+                    if (jtoken.Type == JTokenType.String)
+                    {
+                        try
                         {
-                            var parent = jtoken.Parent as JProperty;
-                            var jobj = new JObject {{this.EMBEDDED_JSON_KEY, value}};
-                            var prop = new JProperty(parent.Name, jobj);
-                            parent.Replace(prop);
-                            //prop1.Value.Replace(jobj);
+                            var value = JToken.Parse(jtoken.Value<string>());
+                            if (value.Type == JTokenType.Array || value.Type == JTokenType.Object)
+                            {
+                                var parent = jtoken.Parent as JProperty;
+                                var jobj = new JObject {{this.EMBEDDED_JSON_KEY, value}};
+                                var prop = new JProperty(parent.Name, jobj);
+                                parent.Replace(prop);
+                                //prop1.Value.Replace(jobj);
+                            }
+                        }
+                        catch
+                        {
+                            // ignored
                         }
                     }
-                    catch
+                    else if (jtoken.Type == JTokenType.Array)
                     {
-                        // ignored
+                        foreach (var token in jtoken.Children().ToList())
+                        {
+                            JsonifyEmbeddedJson(token);
+                        }
                     }
-                } else if (jtoken.Type == JTokenType.Array)
-                {
-                    foreach (var token in jtoken.Children().ToList())
-                    {
-                        JsonifyEmbeddedJson(token);
-                    }
-                }
 
+                }
+            }
+            finally
+            {
+                _depth--;
             }
         }
 
@@ -96,7 +113,7 @@ namespace PowerBi.Converters
             
             var obj = serialiser.Deserialize(reader) as JObject;
 
-            this.JsonifyEmbeddedJson(obj);
+            JsonifyEmbeddedJson(obj);
 
             var memoryStream = new MemoryStream();
             var streamWriter = new StreamWriter(memoryStream);

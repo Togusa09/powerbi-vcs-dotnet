@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.IO.Abstractions.TestingHelpers;
 using PowerBi.Converters;
 using Shouldly;
 using TestStack.BDDfy;
@@ -105,7 +106,7 @@ namespace PowerBi.Tests
 
         private void ANewNoopConverter()
         {
-            var fileSystem = new StubFileSystem();
+            var fileSystem = new MockFileSystem();
             _converter = new NoopConverter(fileSystem);
         }
     }

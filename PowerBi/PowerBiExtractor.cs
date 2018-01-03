@@ -79,7 +79,7 @@ namespace PowerBi
                 foreach (var name in order)
                 {
                     var converter = FindConverter(name);
-                    converter.WriteVcsToRaw(Path.Combine(extractedPath, name), zip);
+                    converter.WriteVcsToRaw(Path.Combine(extractedPath, name.Replace('/', '\\')), zip);
                 }
                 zipStream.Flush();
             }
@@ -128,7 +128,7 @@ namespace PowerBi
                     foreach (var zipArchiveEntry in zip.Entries)
                     {
                         order.Add(zipArchiveEntry.FullName);
-                        var outpath = Path.Combine(outdir, zipArchiveEntry.FullName);
+                        var outpath = Path.Combine(outdir, zipArchiveEntry.FullName.Replace('/', '\\'));
                         var converter = FindConverter(zipArchiveEntry.FullName);
 
                         converter.WriteRawToVcs(zipArchiveEntry.Open(), outpath);

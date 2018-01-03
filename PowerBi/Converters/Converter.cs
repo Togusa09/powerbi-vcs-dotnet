@@ -23,7 +23,7 @@ namespace PowerBi.Converters
 
         public virtual void WriteRawToVcs(Stream zipStream, string vcsPath)
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(vcsPath));
+            _fileSystem.Directory.CreateDirectory(Path.GetDirectoryName(vcsPath.Replace('/', '\\')));
 
             using (var file = _fileSystem.File.Create(vcsPath))
             {
@@ -38,7 +38,7 @@ namespace PowerBi.Converters
 
         public virtual void WriteVcsToRaw(string vcsPath, ZipArchive zipFile)
         {
-            if (File.Exists(vcsPath))
+            if (_fileSystem.File.Exists(vcsPath))
             {
                 var entry = zipFile.CreateEntry(vcsPath, CompressionLevel.Fastest);
                 using (var stream = entry.Open())
@@ -49,7 +49,7 @@ namespace PowerBi.Converters
                     }
                 }
 
-                zipFile.CreateEntryFromFile(vcsPath, Path.GetFileName(vcsPath), CompressionLevel.Fastest);
+                //zipFile.CreateEntryFromFile(vcsPath, Path.GetFileName(vcsPath), CompressionLevel.Fastest);
             }
             else
             {

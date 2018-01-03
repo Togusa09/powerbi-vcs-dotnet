@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.IO.Abstractions.TestingHelpers;
 using System.Text;
 using PowerBi.Converters;
 using Shouldly;
@@ -90,7 +91,7 @@ namespace PowerBi.Tests
 
         private void ANewJsonConverter()
         {
-            var fileSystem = new StubFileSystem();
+            var fileSystem = new MockFileSystem();
             _jsonConverter = new JsonConverter(Encoding.Default, fileSystem);
         }
     }

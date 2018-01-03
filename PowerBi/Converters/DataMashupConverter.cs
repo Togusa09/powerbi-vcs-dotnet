@@ -62,14 +62,15 @@ namespace PowerBi
                 foreach (var zipArchiveEntry in zip.Entries)
                 {
                     order.Add(zipArchiveEntry.FullName);
-                    var outpath = Path.Combine(vcsPath, zipArchiveEntry.FullName);
+                    var outpath = Path.Combine(vcsPath, zipArchiveEntry.FullName.Replace("/", "\\"));
                     var converter = FindConverter(zipArchiveEntry.FullName);
 
                     converter.WriteRawToVcs(zipArchiveEntry.Open(), outpath);
                 }
             }
 
-            using (var file = _fileSystem.CreateNewFile(Path.Combine(vcsPath, ".zo")))
+            //using (var file = _fileSystem.CreateNewFile(Path.Combine(vcsPath, ".zo")))
+            using (var file = _fileSystem.File.Create(Path.Combine(vcsPath, ".zo")))
             using (var writer = new StreamWriter(file))
             {
                 writer.Write(string.Join("\n", order));
@@ -93,11 +94,11 @@ namespace PowerBi
             var zipStream = new MemoryStream();
             using (var zip = new ZipArchive(zipStream, ZipArchiveMode.Create, true))
             {
-                var order = File.ReadAllLines(Path.Combine(vcsdir, ".zo"));
+                var order = _fileSystem.File.ReadAllLines(Path.Combine(vcsdir, ".zo"));
                 foreach (var name in order)
                 {
                     var converter = FindConverter(name);
-                    converter.WriteVcsToRaw(Path.Combine(vcsdir, name), zip );
+                    converter.WriteVcsToRaw(Path.Combine(vcsdir, name.Replace('/', '\\')), zip );
                 }
             }
 
@@ -109,20 +110,30 @@ namespace PowerBi
             zipStream.Seek(0, SeekOrigin.Begin);
             zipStream.WriteTo(stream);
 
-            var xmlb = new XMLConverter(Encoding.UTF8, _fileSystem).VcsToRaw(_fileSystem.OpenFile(Path.Combine(vcsdir, "3.xml")));
-            var xmlStream1 = new MemoryStream();
-            xmlb.CopyTo(xmlStream1);
+            using (var xmlStream1 = new MemoryStream())
+            {
+                using (var file = _fileSystem.File.Open(Path.Combine(vcsdir, "3.xml"), FileMode.Open))
+                {
+                    var xmlb = new XMLConverter(Encoding.UTF8, _fileSystem).VcsToRaw(file);
+                    xmlb.CopyTo(xmlStream1);
+                }
 
-            writer.Write((int)xmlStream1.Length);
-            writer.Write(xmlStream1.ToArray());
+                writer.Write((int) xmlStream1.Length);
+                writer.Write(xmlStream1.ToArray());
+            }
 
-            xmlb = new XMLConverter(Encoding.UTF8, _fileSystem).VcsToRaw(_fileSystem.OpenFile(Path.Combine(vcsdir, "6.xml")));
-            var xmlStream2 = new MemoryStream();
-            xmlb.CopyTo(xmlStream2);
+            using (var xmlStream2 = new MemoryStream())
+            {
+                using (var file = _fileSystem.File.Open(Path.Combine(vcsdir, "6.xml"), FileMode.Open))
+                {
+                    var xmlb = new XMLConverter(Encoding.UTF8, _fileSystem).VcsToRaw(file);
+                    xmlb.CopyTo(xmlStream2);
+                }
 
-            writer.Write((int)xmlStream2.Length + 34);
-            writer.Write(new byte[] { 0x00, 0x00, 0x00, 0x00 });
-            writer.Write(xmlStream2.ToArray());
+                writer.Write((int) xmlStream2.Length + 34);
+                writer.Write(new byte[] {0x00, 0x00, 0x00, 0x00});
+                writer.Write(xmlStream2.ToArray());
+            }
 
             new NoopConverter(_fileSystem).WriteVcsToRaw(Path.Combine(vcsdir, "7.bytes"), zipFile);
         }

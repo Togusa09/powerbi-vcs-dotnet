@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO.Abstractions.TestingHelpers;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using Shouldly;
 using TestStack.BDDfy;
 using TestStack.BDDfy.Scanners.StepScanners.Fluent;
@@ -46,7 +42,7 @@ namespace PowerBi.Tests
 
         private void TheFileIsCreated(string filename)
         {
-             _fileSystem.AllFiles.ShouldContain(filename);
+             _fileSystem.AllFiles.ShouldContain(@"C:\Test\" + filename);
         }
 
         private void TheExtractProcessIsRun(string input, string output)
@@ -61,12 +57,12 @@ namespace PowerBi.Tests
 
         private void AFileThatExists(string templatePbit)
         {
-            _fileSystem.AddFileFromEmbeddedResource("PowerBi.Tests.Files.Template.pbit", Assembly.GetExecutingAssembly(), "Template.pbit");
+            _fileSystem.AddFileFromEmbeddedResource("Template.pbit", Assembly.GetExecutingAssembly(), "PowerBi.Tests.Files.Template.pbit");
         }
 
         private void ANewPowerBiExtractor()
         {
-            _fileSystem = new MockFileSystem();
+            _fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>(), @"C:\Test\");
             _extractor = new PowerBiExtractor(_fileSystem);
         }
     }

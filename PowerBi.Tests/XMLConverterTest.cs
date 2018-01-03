@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.IO.Abstractions.TestingHelpers;
 using System.Text;
 using PowerBi.Converters;
 using Shouldly;
@@ -131,7 +132,7 @@ namespace PowerBi.Tests
 
         private void ANewXMLConverter(Encoding encoding)
         {
-            var fileSystem = new StubFileSystem();
+            var fileSystem = new MockFileSystem();
             _outputEncoding = encoding;
             _XMLConverter = new XMLConverter(encoding, fileSystem);
         }
