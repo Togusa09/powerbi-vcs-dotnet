@@ -50,7 +50,6 @@
   <ItemGroup>
     <Compile Include="Converters\Converter.cs" />
     <Compile Include="Converters\DataMashupConverter.cs" />
-    <Compile Include="FileSystem.cs" />
     <Compile Include="Converters\JsonConverter.cs" />
     <Compile Include="Converters\MetadataConverter.cs" />
     <Compile Include="Converters\NoopConverter.cs" />

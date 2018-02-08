@@ -1,6 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.IO.Abstractions.TestingHelpers;
 using System.Reflection;
+using System.Security.Cryptography;
 using Shouldly;
 using TestStack.BDDfy;
 using TestStack.BDDfy.Scanners.StepScanners.Fluent;
@@ -8,6 +11,16 @@ using Xunit;
 
 namespace PowerBi.Tests
 {
+    public static class HashExtension
+    {
+        public static string HashFile(this Stream stream)
+        {
+            var sha = new SHA256Managed();
+            byte[] checksum = sha.ComputeHash(stream);
+            return BitConverter.ToString(checksum).Replace("-", String.Empty);
+        }
+    }
+
     public class FileExtrationTest
     {
         private MockFileSystem _fileSystem;
@@ -31,7 +44,28 @@ namespace PowerBi.Tests
                 .When(s => s.TheExtractProcessIsRun("Template.pbit", "Output"))
                     .And(s => s.TheCompressionProcessIsRun("Output", "Template2.pbit"))
                 .Then(s => s.TheFileIsCreated("Template2.pbit"))
+                    .And(s => s.TheFileMatchesTheOriginal())
                 .BDDfy();
+        }
+
+        private void TheFileMatchesTheOriginal()
+        {
+            var originalFile = _fileSystem.FileInfo.FromFileName("Template.pbit");
+            var newFile = _fileSystem.FileInfo.FromFileName("Template2.pbit");
+            newFile.Length.ShouldBe(originalFile.Length);
+
+            var originalFileHash = string.Empty;
+            using (var stream = originalFile.Open(FileMode.Open))
+            {
+                originalFileHash = stream.HashFile();
+            }
+
+            var newFileHash = string.Empty;
+            using (var stream = newFile.Open(FileMode.Open))
+            {
+                newFileHash = stream.HashFile();
+            }
+            newFileHash.ShouldBe(originalFileHash);
         }
 
         private void AllTheFilesAreCreated()
@@ -43,6 +77,9 @@ namespace PowerBi.Tests
         private void TheFileIsCreated(string filename)
         {
              _fileSystem.AllFiles.ShouldContain(@"C:\Test\" + filename);
+
+            //var attributes = _fileSystem.FileInfo.FromFileName(@"C:\Test\" + filename);
+            //attributes.Length
         }
 
         private void TheExtractProcessIsRun(string input, string output)

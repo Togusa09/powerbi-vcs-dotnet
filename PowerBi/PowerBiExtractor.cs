@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
 using System.IO.Compression;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using PowerBi.Converters;
@@ -75,13 +76,14 @@ namespace PowerBi
 
             using (var zipStream = _fileSystem.File.Create(compressedPath))
             {
-                var zip = new ZipArchive(zipStream, ZipArchiveMode.Create);
-                foreach (var name in order)
+                using (var zip = new ZipArchive(zipStream, ZipArchiveMode.Create))
                 {
-                    var converter = FindConverter(name);
-                    converter.WriteVcsToRaw(Path.Combine(extractedPath, name.Replace('/', '\\')), zip);
+                    foreach (var name in order)
+                    {
+                        var converter = FindConverter(name);
+                        converter.WriteVcsToRaw(Path.Combine(extractedPath, name.Replace('/', '\\')), name.Replace('/', '\\'), zip);
+                    }
                 }
-                zipStream.Flush();
             }
         }
 

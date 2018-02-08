@@ -2,7 +2,6 @@
 using System.IO;
 using System.IO.Abstractions;
 using System.IO.Compression;
-using System.Text;
 
 namespace PowerBi.Converters
 {
@@ -36,11 +35,11 @@ namespace PowerBi.Converters
             }
         }
 
-        public virtual void WriteVcsToRaw(string vcsPath, ZipArchive zipFile)
+        public virtual void WriteVcsToRaw(string vcsPath, string zipPath, ZipArchive zipFile)
         {
             if (_fileSystem.File.Exists(vcsPath))
             {
-                var entry = zipFile.CreateEntry(vcsPath, CompressionLevel.Fastest);
+                var entry = zipFile.CreateEntry(zipPath, CompressionLevel.Fastest);
                 using (var stream = entry.Open())
                 {
                     using (var file = _fileSystem.File.Open(vcsPath, FileMode.Open))

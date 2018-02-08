@@ -85,57 +85,62 @@ namespace PowerBi
             new NoopConverter(_fileSystem).WriteRawToVcs(extraStream, Path.Combine(vcsPath, "7.bytes"));
         }
 
-        public override void WriteVcsToRaw(string vcsdir, ZipArchive zipFile)
+        public override void WriteVcsToRaw(string vcsdir, string zipPath, ZipArchive zipFile)
         {
             //zip up the header bytes
-            var stream = new MemoryStream();
-            var writer = new BinaryWriter(stream);
-
-            var zipStream = new MemoryStream();
-            using (var zip = new ZipArchive(zipStream, ZipArchiveMode.Create, true))
+            using (var stream = new MemoryStream())
+            using (var writer = new BinaryWriter(stream))
             {
-                var order = _fileSystem.File.ReadAllLines(Path.Combine(vcsdir, ".zo"));
-                foreach (var name in order)
+                using (var zipStream = new MemoryStream())
                 {
-                    var converter = FindConverter(name);
-                    converter.WriteVcsToRaw(Path.Combine(vcsdir, name.Replace('/', '\\')), zip );
+                    using (var zip = new ZipArchive(zipStream, ZipArchiveMode.Create, true))
+                    {
+                        var order = _fileSystem.File.ReadAllLines(Path.Combine(vcsdir, ".zo"));
+                        foreach (var name in order)
+                        {
+                            var converter = FindConverter(name);
+                            converter.WriteVcsToRaw(Path.Combine(vcsdir, name.Replace('/', '\\')), name.Replace('/', '\\'), zip);
+                        }
+                    }
+
+                    //Write header
+                    writer.Write(new byte[] { 0x00, 0x00, 0x00, 0x00 });
+
+                    //write zip
+                    zipStream.Flush();
+                    zipStream.Seek(0, SeekOrigin.Begin);
+                    zipStream.WriteTo(stream);
+                }
+
+                using (var xmlStream1 = new MemoryStream())
+                {
+                    using (var file = _fileSystem.File.Open(Path.Combine(vcsdir, "3.xml"), FileMode.Open))
+                    {
+                        var xmlb = new XMLConverter(Encoding.UTF8, _fileSystem).VcsToRaw(file);
+                        xmlb.CopyTo(xmlStream1);
+                    }
+
+                    writer.Write((int)xmlStream1.Length);
+                    writer.Write(xmlStream1.ToArray());
+                }
+
+                using (var xmlStream2 = new MemoryStream())
+                {
+                    using (var file = _fileSystem.File.Open(Path.Combine(vcsdir, "6.xml"), FileMode.Open))
+                    {
+                        using (var xmlb = new XMLConverter(Encoding.UTF8, _fileSystem).VcsToRaw(file))
+                        {
+                            xmlb.CopyTo(xmlStream2);
+                        }
+                    }
+
+                    writer.Write((int)xmlStream2.Length + 34);
+                    writer.Write(new byte[] { 0x00, 0x00, 0x00, 0x00 });
+                    writer.Write(xmlStream2.ToArray());
                 }
             }
 
-            //Write header
-            writer.Write(new byte[] { 0x00, 0x00, 0x00, 0x00});
-            
-            //write zip
-            zipStream.Flush();
-            zipStream.Seek(0, SeekOrigin.Begin);
-            zipStream.WriteTo(stream);
-
-            using (var xmlStream1 = new MemoryStream())
-            {
-                using (var file = _fileSystem.File.Open(Path.Combine(vcsdir, "3.xml"), FileMode.Open))
-                {
-                    var xmlb = new XMLConverter(Encoding.UTF8, _fileSystem).VcsToRaw(file);
-                    xmlb.CopyTo(xmlStream1);
-                }
-
-                writer.Write((int) xmlStream1.Length);
-                writer.Write(xmlStream1.ToArray());
-            }
-
-            using (var xmlStream2 = new MemoryStream())
-            {
-                using (var file = _fileSystem.File.Open(Path.Combine(vcsdir, "6.xml"), FileMode.Open))
-                {
-                    var xmlb = new XMLConverter(Encoding.UTF8, _fileSystem).VcsToRaw(file);
-                    xmlb.CopyTo(xmlStream2);
-                }
-
-                writer.Write((int) xmlStream2.Length + 34);
-                writer.Write(new byte[] {0x00, 0x00, 0x00, 0x00});
-                writer.Write(xmlStream2.ToArray());
-            }
-
-            new NoopConverter(_fileSystem).WriteVcsToRaw(Path.Combine(vcsdir, "7.bytes"), zipFile);
+            new NoopConverter(_fileSystem).WriteVcsToRaw(Path.Combine(vcsdir, "7.bytes"), "7.bytes", zipFile);
         }
 
         public override Stream RawToVcs(Stream b)
@@ -147,61 +152,72 @@ namespace PowerBi
         {
             var stringBuilder = new StringBuilder();
 
-            var memoryStream = new MemoryStream();
-            zipStream.CopyTo(memoryStream);
-            memoryStream.Seek(0, SeekOrigin.Begin);
-            var binaryReader = new BinaryReader(memoryStream);
-
-            binaryReader.ReadBytes(4);
-            var len1 = binaryReader.ReadInt32();
-            var zip1 = binaryReader.ReadBytes(len1);
-
-            var len2 = binaryReader.ReadInt32();
-            var xml1 = binaryReader.ReadBytes(len2);
-
-            var len3a = binaryReader.ReadInt32();
-            binaryReader.ReadBytes(4);
-            var len3b = binaryReader.ReadInt32();
-            if (len3a - len3b != 34)
+            using (var memoryStream = new MemoryStream())
             {
-                throw new Exception("TODO");
-            }
-
-            var xml2 = binaryReader.ReadBytes(len3a);
-            var extra = binaryReader.ReadBytes((int)(memoryStream.Length - memoryStream.Position));
-
-            var zip1Stream = new MemoryStream(zip1);
-            zip1Stream.Seek(0, SeekOrigin.Begin);
-
-            var order = new List<string>();
-            using (var zip = new ZipArchive(zip1Stream, ZipArchiveMode.Read))
-            {
-                foreach (var zipArchiveEntry in zip.Entries)
+                zipStream.CopyTo(memoryStream);
+                memoryStream.Seek(0, SeekOrigin.Begin);
+                using (var binaryReader = new BinaryReader(memoryStream))
                 {
-                    order.Add(zipArchiveEntry.FullName);
-                    var converter = FindConverter(zipArchiveEntry.FullName);
+                    binaryReader.ReadBytes(4);
+                    var len1 = binaryReader.ReadInt32();
+                    var zip1 = binaryReader.ReadBytes(len1);
 
-                    var text = converter.WriteRawToConsoleText(zipArchiveEntry.Open());
-                    stringBuilder.AppendLine("Filename: " + zipArchiveEntry.FullName);
-                    stringBuilder.AppendLine(text);
+                    var len2 = binaryReader.ReadInt32();
+                    var xml1 = binaryReader.ReadBytes(len2);
+
+                    var len3a = binaryReader.ReadInt32();
+                    binaryReader.ReadBytes(4);
+                    var len3b = binaryReader.ReadInt32();
+                    if (len3a - len3b != 34)
+                    {
+                        throw new Exception("TODO");
+                    }
+
+                    var xml2 = binaryReader.ReadBytes(len3a);
+                    var extra = binaryReader.ReadBytes((int) (memoryStream.Length - memoryStream.Position));
+
+                    using (var zip1Stream = new MemoryStream(zip1))
+                    { 
+                        zip1Stream.Seek(0, SeekOrigin.Begin);
+
+                        var order = new List<string>();
+                        using (var zip = new ZipArchive(zip1Stream, ZipArchiveMode.Read))
+                        {
+                            foreach (var zipArchiveEntry in zip.Entries)
+                            {
+                                order.Add(zipArchiveEntry.FullName);
+                                var converter = FindConverter(zipArchiveEntry.FullName);
+
+                                var text = converter.WriteRawToConsoleText(zipArchiveEntry.Open());
+                                stringBuilder.AppendLine("Filename: " + zipArchiveEntry.FullName);
+                                stringBuilder.AppendLine(text);
+                            }
+                        }
+                    }
+
+                    using (var xmlStream1 = new MemoryStream(xml1))
+                    {
+                        var xmlString1 = new XMLConverter(Encoding.UTF8, _fileSystem).WriteRawToConsoleText(xmlStream1);
+                        stringBuilder.AppendLine("DataMashup -> XML Block 1");
+                        stringBuilder.AppendLine(xmlString1);
+                    }
+
+                    using (var xmlStream2 = new MemoryStream(xml2))
+                    {
+                        var xmlString2 = new XMLConverter(Encoding.UTF8, _fileSystem).WriteRawToConsoleText(xmlStream2);
+                        stringBuilder.AppendLine("DataMashup -> XML Block 2");
+                        stringBuilder.AppendLine(xmlString2);
+                    }
+
+                    using (var extraStream = new MemoryStream(extra))
+                    {
+                        var extraContentString = new NoopConverter(_fileSystem).WriteRawToConsoleText(extraStream);
+                        stringBuilder.AppendLine("DataMashup -> Extra Content");
+                        stringBuilder.AppendLine(extraContentString);
+                        return stringBuilder.ToString();
+                    }
                 }
             }
-
-            var xmlStream1 = new MemoryStream(xml1);
-            var xmlString1 = new XMLConverter(Encoding.UTF8, _fileSystem).WriteRawToConsoleText(xmlStream1);
-            stringBuilder.AppendLine("DataMashup -> XML Block 1");
-            stringBuilder.AppendLine(xmlString1);
-
-            var xmlStream2 = new MemoryStream(xml2);
-            var xmlString2 = new XMLConverter(Encoding.UTF8, _fileSystem).WriteRawToConsoleText(xmlStream2);
-            stringBuilder.AppendLine("DataMashup -> XML Block 2");
-            stringBuilder.AppendLine(xmlString2);
-
-            var extraStream = new MemoryStream(extra);
-            var extraContentString = new NoopConverter(_fileSystem).WriteRawToConsoleText(extraStream);
-            stringBuilder.AppendLine("DataMashup -> Extra Content");
-            stringBuilder.AppendLine(extraContentString);
-            return stringBuilder.ToString();
         }
 
         public override Stream VcsToRaw(Stream b)
@@ -211,7 +227,6 @@ namespace PowerBi
 
         public Converter FindConverter(string path)
         {
-
             Regex.Escape(path).Replace(@"\*", ".*").Replace(@"\?", ".");
             foreach (var converter in _converters)
             {

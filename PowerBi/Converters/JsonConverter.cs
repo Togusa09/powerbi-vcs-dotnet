@@ -63,15 +63,19 @@ namespace PowerBi.Converters
                     {
                         try
                         {
-                            var value = JToken.Parse(jtoken.Value<string>());
-                            if (value.Type == JTokenType.Array || value.Type == JTokenType.Object)
+                            var valueString = jtoken.Value<string>();
+                            if (valueString.StartsWith("{") || valueString.StartsWith("["))
                             {
-                                var parent = jtoken.Parent as JProperty;
-                                var jobj = new JObject {{this.EMBEDDED_JSON_KEY, value}};
-                                var prop = new JProperty(parent.Name, jobj);
-                                parent.Replace(prop);
-                                //prop1.Value.Replace(jobj);
-                            }
+                                var value = JToken.Parse(valueString);
+                                if (value.Type == JTokenType.Array || value.Type == JTokenType.Object)
+                                {
+                                    var parent = jtoken.Parent as JProperty;
+                                    var jobj = new JObject { { this.EMBEDDED_JSON_KEY, value } };
+                                    var prop = new JProperty(parent.Name, jobj);
+                                    parent.Replace(prop);
+                                    //prop1.Value.Replace(jobj);
+                                }
+                            }                         
                         }
                         catch
                         {
@@ -101,31 +105,33 @@ namespace PowerBi.Converters
 
         public override Stream RawToVcs(Stream b)
         {
-            var streamReader = new StreamReader(b, _encoding);
-            var reader = new JsonTextReader(streamReader);
-
-            var serialiser = new JsonSerializer
+            using (var streamReader = new StreamReader(b, _encoding))
+            using (var reader = new JsonTextReader(streamReader))
             {
-                DateTimeZoneHandling = DateTimeZoneHandling.RoundtripKind,
-                DateParseHandling = DateParseHandling.DateTimeOffset,
-                Formatting = Formatting.Indented,
-            };
-            
-            var obj = serialiser.Deserialize(reader) as JObject;
+                var serialiser = new JsonSerializer
+                {
+                    DateTimeZoneHandling = DateTimeZoneHandling.RoundtripKind,
+                    DateParseHandling = DateParseHandling.DateTimeOffset,
+                    Formatting = Formatting.Indented,
+                };
 
-            JsonifyEmbeddedJson(obj);
+                var obj = serialiser.Deserialize(reader) as JObject;
 
-            var memoryStream = new MemoryStream();
-            var streamWriter = new StreamWriter(memoryStream);
-            var writer = new JsonTextWriter(streamWriter);
-            serialiser.Formatting = Formatting.Indented;
+                JsonifyEmbeddedJson(obj);
 
-            serialiser.Serialize(writer, obj);
+                var memoryStream = new MemoryStream();
+                using (var streamWriter = new StreamWriter(memoryStream, Encoding.UTF8, 1024, true))
+                using (var writer = new JsonTextWriter(streamWriter))
+                {
+                    serialiser.Formatting = Formatting.Indented;
+                    serialiser.Serialize(writer, obj);
 
-            writer.Flush();
-            memoryStream.Seek(0, SeekOrigin.Begin);
+                    writer.Flush();
+                    memoryStream.Seek(0, SeekOrigin.Begin);
 
-            return memoryStream;
+                    return memoryStream;
+                }
+            }
         }
 
         public override string RawToConsoleText(Stream b)
