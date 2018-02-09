@@ -88,7 +88,9 @@ namespace PowerBi
         public override void WriteVcsToRaw(string vcsdir, string zipPath, ZipArchive zipFile)
         {
             //zip up the header bytes
-            using (var stream = new MemoryStream())
+            //using (var stream = new MemoryStream())
+            var entry = zipFile.CreateEntry(zipPath);
+            using (var stream = entry.Open())
             using (var writer = new BinaryWriter(stream))
             {
                 using (var zipStream = new MemoryStream())
@@ -138,9 +140,9 @@ namespace PowerBi
                     writer.Write(new byte[] { 0x00, 0x00, 0x00, 0x00 });
                     writer.Write(xmlStream2.ToArray());
                 }
-            }
 
             new NoopConverter(_fileSystem).WriteVcsToRaw(Path.Combine(vcsdir, "7.bytes"), "7.bytes", zipFile);
+            }            
         }
 
         public override Stream RawToVcs(Stream b)
