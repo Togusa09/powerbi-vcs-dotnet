@@ -134,7 +134,7 @@ namespace PowerBi.Tests
         {
             var fileSystem = new MockFileSystem();
             _outputEncoding = encoding;
-            _XMLConverter = new XMLConverter(encoding, fileSystem);
+            _XMLConverter = new XMLConverter(encoding, fileSystem, false);
         }
     }
 }

@@ -18,8 +18,8 @@ namespace PowerBi
         {
             _converters = new Dictionary<string, Converter>()
             {
-                {"[Content_Types].xml", new  XMLConverter(Encoding.UTF8, fileSystem)},
-                {"Config/Package.xml", new  XMLConverter(Encoding.UTF8, fileSystem)},
+                {"[Content_Types].xml", new  XMLConverter(Encoding.UTF8, fileSystem, false)},
+                {"Config/Package.xml", new  XMLConverter(Encoding.UTF8, fileSystem, false)},
                 {"Formulas/Section1.m", new  NoopConverter(fileSystem)},
             };
         }
@@ -76,10 +76,10 @@ namespace PowerBi
                 writer.Write(string.Join("\n", order));
             }
             var xmlStream1 =  new MemoryStream(xml1);
-            new XMLConverter(Encoding.UTF8, _fileSystem).WriteRawToVcs(xmlStream1, Path.Combine(vcsPath, "3.xml"));
+            new XMLConverter(Encoding.UTF8, _fileSystem, false).WriteRawToVcs(xmlStream1, Path.Combine(vcsPath, "3.xml"));
 
             var xmlStream2 = new MemoryStream(xml2);
-            new XMLConverter(Encoding.UTF8, _fileSystem).WriteRawToVcs(xmlStream2, Path.Combine(vcsPath, "6.xml"));
+            new XMLConverter(Encoding.UTF8, _fileSystem, false).WriteRawToVcs(xmlStream2, Path.Combine(vcsPath, "6.xml"));
 
             var extraStream = new MemoryStream(extra);
             new NoopConverter(_fileSystem).WriteRawToVcs(extraStream, Path.Combine(vcsPath, "7.bytes"));
@@ -116,7 +116,7 @@ namespace PowerBi
                 {
                     using (var file = _fileSystem.File.Open(Path.Combine(vcsdir, "3.xml"), FileMode.Open))
                     {
-                        var xmlb = new XMLConverter(Encoding.UTF8, _fileSystem).VcsToRaw(file);
+                        var xmlb = new XMLConverter(Encoding.UTF8, _fileSystem, false).VcsToRaw(file);
                         xmlb.CopyTo(xmlStream1);
                     }
 
@@ -128,7 +128,7 @@ namespace PowerBi
                 {
                     using (var file = _fileSystem.File.Open(Path.Combine(vcsdir, "6.xml"), FileMode.Open))
                     {
-                        using (var xmlb = new XMLConverter(Encoding.UTF8, _fileSystem).VcsToRaw(file))
+                        using (var xmlb = new XMLConverter(Encoding.UTF8, _fileSystem, false).VcsToRaw(file))
                         {
                             xmlb.CopyTo(xmlStream2);
                         }
@@ -197,14 +197,14 @@ namespace PowerBi
 
                     using (var xmlStream1 = new MemoryStream(xml1))
                     {
-                        var xmlString1 = new XMLConverter(Encoding.UTF8, _fileSystem).WriteRawToConsoleText(xmlStream1);
+                        var xmlString1 = new XMLConverter(Encoding.UTF8, _fileSystem, false).WriteRawToConsoleText(xmlStream1);
                         stringBuilder.AppendLine("DataMashup -> XML Block 1");
                         stringBuilder.AppendLine(xmlString1);
                     }
 
                     using (var xmlStream2 = new MemoryStream(xml2))
                     {
-                        var xmlString2 = new XMLConverter(Encoding.UTF8, _fileSystem).WriteRawToConsoleText(xmlStream2);
+                        var xmlString2 = new XMLConverter(Encoding.UTF8, _fileSystem, false).WriteRawToConsoleText(xmlStream2);
                         stringBuilder.AppendLine("DataMashup -> XML Block 2");
                         stringBuilder.AppendLine(xmlString2);
                     }

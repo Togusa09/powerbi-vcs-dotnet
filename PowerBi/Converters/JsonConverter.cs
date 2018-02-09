@@ -12,12 +12,14 @@ namespace PowerBi.Converters
     {
         private string EMBEDDED_JSON_KEY = "__powerbi-vcs-embedded-json__";
         private bool SORT_KEYS = false;
+        private bool _formatRaw;
 
         private readonly Encoding _encoding;
 
-        public JsonConverter(Encoding encoding, IFileSystem fileSystem) : base(fileSystem)
+        public JsonConverter(Encoding encoding, IFileSystem fileSystem, bool formatRaw) : base(fileSystem)
         {
             _encoding = encoding;
+            _formatRaw = formatRaw;
         }
 
         // So not threadsafe...
@@ -37,7 +39,7 @@ namespace PowerBi.Converters
         ///```
         /// </summary>
         /// <param name="v"></param>
-        private void JsonifyEmbeddedJson(Object obj)
+        private void JsonifyEmbeddedJson(JToken obj)
         {
             _depth++;
             if (_depth > 1000)
@@ -56,9 +58,9 @@ namespace PowerBi.Converters
                     }
 
                 }
-                else if (obj is JToken)
+                else
                 {
-                    var jtoken = obj as JToken;
+                    var jtoken = obj;
                     if (jtoken.Type == JTokenType.String)
                     {
                         try
@@ -89,7 +91,6 @@ namespace PowerBi.Converters
                             JsonifyEmbeddedJson(token);
                         }
                     }
-
                 }
             }
             finally
@@ -98,9 +99,45 @@ namespace PowerBi.Converters
             }
         }
 
-        private void UndoJsonifyEmbeddedJson(string v)
+        private void UndoJsonifyEmbeddedJson(JToken token)
         {
-            
+       if (token is JObject)
+            {
+                var jobj = (JObject)token;
+                foreach (var property in jobj.Properties().ToList())
+                {
+                    if (property.Name == EMBEDDED_JSON_KEY)
+                    {
+                        //var parent = property.Parent as JProperty;
+
+                        var serialiser = new JsonSerializer
+                        {
+                            DateTimeZoneHandling = DateTimeZoneHandling.RoundtripKind,
+                            DateParseHandling = DateParseHandling.DateTimeOffset,
+                            Formatting = Formatting.Indented,
+                        };
+
+                        var serialised = JsonConvert.SerializeObject(property.First);
+                        var parent = property.Parent.Parent as JProperty;
+                        parent.Replace(new JProperty(parent.Name, serialised));
+                    }
+                    else
+                    {
+                        UndoJsonifyEmbeddedJson(property.Value);
+                    }
+                }
+            }
+            else
+            {
+                 
+                if (token.Type == JTokenType.Array)
+                {
+                    foreach (var childToken in token.Children().ToList())
+                    {
+                        UndoJsonifyEmbeddedJson(childToken);
+                    }
+                }
+            }
         }
 
         public override Stream RawToVcs(Stream b)
@@ -159,28 +196,37 @@ namespace PowerBi.Converters
 
         public override Stream VcsToRaw(Stream b)
         {
-            var streamReader = new StreamReader(b, _encoding);
-            var reader = new JsonTextReader(streamReader);
-
-            var serialiser = new JsonSerializer
+            using(var streamReader = new StreamReader(b, _encoding))
+            using(var reader = new JsonTextReader(streamReader))
             {
-                DateTimeZoneHandling = DateTimeZoneHandling.RoundtripKind,
-                DateParseHandling = DateParseHandling.DateTimeOffset,
-                Formatting = Formatting.None
-            };
+                var serialiser = new JsonSerializer
+                {
+                    DateTimeZoneHandling = DateTimeZoneHandling.RoundtripKind,
+                    DateParseHandling = DateParseHandling.DateTime,
+                    Formatting = Formatting.None
+                };
 
-            var obj = serialiser.Deserialize(reader);
+                if (_formatRaw)
+                {
+                    serialiser.Formatting = Formatting.Indented;
+                }
 
-            var memoryStream = new MemoryStream();
-            var streamWriter = new StreamWriter(memoryStream);
-            var writer = new JsonTextWriter(streamWriter);
+                var obj = serialiser.Deserialize(reader);
 
-            serialiser.Serialize(writer, obj);
+                UndoJsonifyEmbeddedJson(obj as JToken);
 
-            writer.Flush();
-            memoryStream.Seek(0, SeekOrigin.Begin);
+                var memoryStream = new MemoryStream();
+                using (var streamWriter = new StreamWriter(memoryStream, _encoding, 1024, true))
+                using(var writer = new JsonTextWriter(streamWriter))
+                {
+                    serialiser.Serialize(writer, obj);
 
-            return memoryStream;
+                    writer.Flush();
+                    memoryStream.Seek(0, SeekOrigin.Begin);
+
+                    return memoryStream;
+                }
+            }
         }
     }
 }

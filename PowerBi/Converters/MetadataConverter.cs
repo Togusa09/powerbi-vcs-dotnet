@@ -16,8 +16,6 @@ namespace PowerBi.Converters
     {
         public override Stream RawToVcs(Stream b)
         {
-            var outputStream = new MemoryStream();
-
             var section1 = new List<SectionEntry>();
             var section2 = new List<SectionEntry>();
             var section3 = new List<string>();
@@ -57,6 +55,7 @@ namespace PowerBi.Converters
                 }
             }
 
+            var outputStream = new MemoryStream();
             using (var streamWriter = new StreamWriter(outputStream, Encoding.UTF8, 1024, true))
             {
                 streamWriter.WriteLine("Section1");
@@ -65,7 +64,7 @@ namespace PowerBi.Converters
                     streamWriter.WriteLine($"{entry.Name}: {entry.Key}");
                 }
                 streamWriter.WriteLine("Section2");
-                foreach (var entry in section1)
+                foreach (var entry in section2)
                 {
                     streamWriter.WriteLine($"{entry.Name}: {entry.Key}");
                 }
@@ -75,7 +74,7 @@ namespace PowerBi.Converters
                     streamWriter.WriteLine(entry);
                 }
             }
-
+            outputStream.Seek(0, SeekOrigin.Begin);
             return outputStream;
         }
 
@@ -93,9 +92,9 @@ namespace PowerBi.Converters
             while (!streamReader.EndOfStream)
             {
                 var line = streamReader.ReadLine();
-                if (line == "Section 1") { section = 1; continue; }
-                if (line == "Section 2") { section = 2; continue; }
-                if (line == "Section 3") { section = 3; continue; }
+                if (line == "Section1") { section = 1; continue; }
+                if (line == "Section2") { section = 2; continue; }
+                if (line == "Section3") { section = 3; continue; }
 
                 var split = line.Split(':');
 
@@ -140,12 +139,13 @@ namespace PowerBi.Converters
             }
             
             outputStream.Flush();
+            outputStream.Seek(0, SeekOrigin.Begin);
             return outputStream;
         }
 
         private void WriteOutString(BinaryWriter writer, string s)
         {
-            writer.Write((byte)s.Length);
+            //writer.Write((byte)s.Length);
             writer.Write(s);
         }
 

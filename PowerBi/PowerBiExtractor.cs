@@ -20,18 +20,18 @@ namespace PowerBi
             _fileSystem = fileSystem;
             _converters = new Dictionary<string, Converter>()
             {
-                {"DataModelSchema", new JsonConverter(Encoding.Unicode, fileSystem)  },
-                {"DiagramState", new  JsonConverter(Encoding.Unicode, fileSystem)},
-                {"Report/Layout", new JsonConverter(Encoding.Unicode, fileSystem)},
-                {"Report/LinguisticSchema", new  XMLConverter(Encoding.Unicode, fileSystem)},
-                {"[Content_Types].xml", new  XMLConverter(Encoding.UTF8, fileSystem)},
+                {"DataModelSchema", new JsonConverter(new UnicodeEncoding(false, false), fileSystem, true)  },
+                {"DiagramState", new  JsonConverter(new UnicodeEncoding(false, false), fileSystem, false)},
+                {"Report/Layout", new JsonConverter(new UnicodeEncoding(false, false), fileSystem, false)},
+                {"Report/LinguisticSchema", new  XMLConverter(new UnicodeEncoding(false, false), fileSystem, true)},
+                {"[Content_Types].xml", new  XMLConverter(Encoding.UTF8, fileSystem, false)},
                 {"SecurityBindings", new  NoopConverter(fileSystem)},
                 {"Settings", new  NoopConverter(fileSystem)},
                 {"Version", new  NoopConverter(fileSystem)},
                 {"Report/StaticResources/", new  NoopConverter(fileSystem)},
                 {"DataMashup", new DataMashupConverter(fileSystem)},
                 {"Metadata", new MetadataConverter(fileSystem)},
-                {"*.json", new  JsonConverter(Encoding.UTF8, fileSystem)},
+                {"*.json", new  JsonConverter(Encoding.UTF8, fileSystem, false)},
             };
         }
 

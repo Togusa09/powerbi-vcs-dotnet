@@ -69,7 +69,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="FileExtrationTest.cs" />
+    <Compile Include="HashExtension.cs" />
     <Compile Include="JSONConverterTest.cs" />
+    <Compile Include="JSONConveterEmbeddedTest.cs" />
     <Compile Include="NoopConverterTest.cs" />
     <Compile Include="PbiVcsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

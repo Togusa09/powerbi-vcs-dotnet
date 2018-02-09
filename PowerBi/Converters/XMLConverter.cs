@@ -8,10 +8,12 @@ namespace PowerBi.Converters
     public class XMLConverter : Converter
     {
         private Encoding _encoding;
+        private bool _omitXmlDeclaration;
 
-        public XMLConverter(Encoding encoding, IFileSystem fileSystem) : base(fileSystem)
+        public XMLConverter(Encoding encoding, IFileSystem fileSystem, bool omitXmlDeclaration) : base(fileSystem)
         {
             _encoding = encoding;
+            _omitXmlDeclaration = omitXmlDeclaration;
         }
 
         public override Stream RawToVcs(Stream b)
@@ -37,7 +39,7 @@ namespace PowerBi.Converters
             XmlDocument doc = new XmlDocument();
             doc.Load(b);
 
-            XmlWriterSettings ws = new XmlWriterSettings {Indent = false,};
+            XmlWriterSettings ws = new XmlWriterSettings {Indent = false, NewLineHandling = NewLineHandling.None, Encoding = _encoding, OmitXmlDeclaration = _omitXmlDeclaration };
 
             var outputStream = new MemoryStream();
 
@@ -88,13 +90,11 @@ namespace PowerBi.Converters
             doc.Load(b);
 
             using (var writer = new StringWriter())
+            using (var textWriter = new XmlTextWriter(writer))
             {
-                using (var textWriter = new XmlTextWriter(writer))
-                {
-                    textWriter.Formatting = Formatting.Indented;
-                    doc.WriteTo(textWriter);
-                    return writer.ToString();
-                }
+                textWriter.Formatting = Formatting.Indented;
+                doc.WriteTo(textWriter);
+                return writer.ToString();
             }
         }
     }

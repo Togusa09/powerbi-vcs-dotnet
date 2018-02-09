@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions.TestingHelpers;
 using System.Reflection;
-using System.Security.Cryptography;
 using Shouldly;
 using TestStack.BDDfy;
 using TestStack.BDDfy.Scanners.StepScanners.Fluent;
@@ -11,16 +9,6 @@ using Xunit;
 
 namespace PowerBi.Tests
 {
-    public static class HashExtension
-    {
-        public static string HashFile(this Stream stream)
-        {
-            var sha = new SHA256Managed();
-            byte[] checksum = sha.ComputeHash(stream);
-            return BitConverter.ToString(checksum).Replace("-", String.Empty);
-        }
-    }
-
     public class FileExtrationTest
     {
         private MockFileSystem _fileSystem;

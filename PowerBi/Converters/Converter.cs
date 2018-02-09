@@ -28,6 +28,7 @@ namespace PowerBi.Converters
             {
                 using (var outStream = RawToVcs(zipStream))
                 {
+                    
                     file.Seek(0, SeekOrigin.Begin);
                     outStream.CopyTo(file);
                     file.Flush();
@@ -40,11 +41,17 @@ namespace PowerBi.Converters
             if (_fileSystem.File.Exists(vcsPath))
             {
                 var entry = zipFile.CreateEntry(zipPath, CompressionLevel.Fastest);
-                using (var stream = entry.Open())
+                using (var zipEntryStream = entry.Open())
                 {
                     using (var file = _fileSystem.File.Open(vcsPath, FileMode.Open))
                     {
-                        file.CopyTo(stream);
+                        //file.CopyTo(stream);
+                        using (var convertedStream = VcsToRaw(file))
+                        {
+                            convertedStream.Seek(0, SeekOrigin.Begin);
+                            convertedStream.CopyTo(zipEntryStream);
+                            zipEntryStream.Flush();
+                        }
                     }
                 }
 

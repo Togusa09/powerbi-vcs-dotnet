@@ -92,7 +92,7 @@ namespace PowerBi.Tests
         private void ANewJsonConverter()
         {
             var fileSystem = new MockFileSystem();
-            _jsonConverter = new JsonConverter(Encoding.Default, fileSystem);
+            _jsonConverter = new JsonConverter(Encoding.Default, fileSystem, false);
         }
     }
 }
