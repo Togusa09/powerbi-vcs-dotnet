@@ -76,12 +76,26 @@ namespace PowerBi
 
             using (var zipStream = _fileSystem.File.Create(compressedPath))
             {
-                using (var zip = new ZipArchive(zipStream, ZipArchiveMode.Create))
+                using (var zipFile = new ZipArchive(zipStream, ZipArchiveMode.Create))
                 {
                     foreach (var name in order)
                     {
+                        var vcsPath = Path.Combine(extractedPath, name.Replace('/', '\\'));
+                        var zipPath = name.Replace('/', '\\');
                         var converter = FindConverter(name);
-                        converter.WriteVcsToRaw(Path.Combine(extractedPath, name.Replace('/', '\\')), name.Replace('/', '\\'), zip);
+
+                        if (_fileSystem.File.Exists(vcsPath) || _fileSystem.Directory.Exists(vcsPath))
+                        {
+                            var zipEntry = zipFile.CreateEntry(zipPath, CompressionLevel.Fastest);
+                            using (var zipEntryStream = zipEntry.Open())
+                            {
+                                converter.WriteVcsToRaw(Path.Combine(extractedPath, name.Replace('/', '\\')), zipEntryStream);
+                            }
+                        }
+                        else
+                        {
+                            throw new Exception($"File {vcsPath} does not exist");
+                        }
                     }
                 }
             }

@@ -108,16 +108,14 @@ namespace PowerBi.Converters
                 {
                     if (property.Name == EMBEDDED_JSON_KEY)
                     {
-                        //var parent = property.Parent as JProperty;
-
-                        var serialiser = new JsonSerializer
+                        var settings = new JsonSerializerSettings
                         {
                             DateTimeZoneHandling = DateTimeZoneHandling.RoundtripKind,
                             DateParseHandling = DateParseHandling.DateTimeOffset,
-                            Formatting = Formatting.Indented,
+                            Formatting = Formatting.Indented
                         };
 
-                        var serialised = JsonConvert.SerializeObject(property.First);
+                        var serialised = JsonConvert.SerializeObject(property.First, settings);
                         var parent = property.Parent.Parent as JProperty;
                         parent.Replace(new JProperty(parent.Name, serialised));
                     }
@@ -157,7 +155,7 @@ namespace PowerBi.Converters
                 JsonifyEmbeddedJson(obj);
 
                 var memoryStream = new MemoryStream();
-                using (var streamWriter = new StreamWriter(memoryStream, Encoding.UTF8, 1024, true))
+                using (var streamWriter = new StreamWriter(memoryStream, _encoding, 1024, true))
                 using (var writer = new JsonTextWriter(streamWriter))
                 {
                     serialiser.Formatting = Formatting.Indented;
@@ -202,7 +200,7 @@ namespace PowerBi.Converters
                 var serialiser = new JsonSerializer
                 {
                     DateTimeZoneHandling = DateTimeZoneHandling.RoundtripKind,
-                    DateParseHandling = DateParseHandling.DateTime,
+                    DateParseHandling = DateParseHandling.None,
                     Formatting = Formatting.None
                 };
 

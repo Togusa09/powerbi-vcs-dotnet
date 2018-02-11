@@ -18,8 +18,8 @@ namespace PowerBi
         {
             _converters = new Dictionary<string, Converter>()
             {
-                {"[Content_Types].xml", new  XMLConverter(Encoding.UTF8, fileSystem, false)},
-                {"Config/Package.xml", new  XMLConverter(Encoding.UTF8, fileSystem, false)},
+                {"[Content_Types].xml", new  XMLConverter(new UTF8Encoding(false), fileSystem, false)},
+                {"Config/Package.xml", new  XMLConverter(new UTF8Encoding(false), fileSystem, false)},
                 {"Formulas/Section1.m", new  NoopConverter(fileSystem)},
             };
         }
@@ -76,32 +76,35 @@ namespace PowerBi
                 writer.Write(string.Join("\n", order));
             }
             var xmlStream1 =  new MemoryStream(xml1);
-            new XMLConverter(Encoding.UTF8, _fileSystem, false).WriteRawToVcs(xmlStream1, Path.Combine(vcsPath, "3.xml"));
+            new XMLConverter(new UTF8Encoding(false), _fileSystem, false).WriteRawToVcs(xmlStream1, Path.Combine(vcsPath, "3.xml"));
 
             var xmlStream2 = new MemoryStream(xml2);
-            new XMLConverter(Encoding.UTF8, _fileSystem, false).WriteRawToVcs(xmlStream2, Path.Combine(vcsPath, "6.xml"));
+            new XMLConverter(new UTF8Encoding(false), _fileSystem, false).WriteRawToVcs(xmlStream2, Path.Combine(vcsPath, "6.xml"));
 
             var extraStream = new MemoryStream(extra);
             new NoopConverter(_fileSystem).WriteRawToVcs(extraStream, Path.Combine(vcsPath, "7.bytes"));
         }
 
-        public override void WriteVcsToRaw(string vcsdir, string zipPath, ZipArchive zipFile)
+        public override void WriteVcsToRaw(string vcsdir, Stream zipEntryStream)
         {
             //zip up the header bytes
             //using (var stream = new MemoryStream())
-            var entry = zipFile.CreateEntry(zipPath);
-            using (var stream = entry.Open())
-            using (var writer = new BinaryWriter(stream))
+           // using (var stream = zipEntry.Open())
+            using (var writer = new BinaryWriter(zipEntryStream))
             {
                 using (var zipStream = new MemoryStream())
                 {
-                    using (var zip = new ZipArchive(zipStream, ZipArchiveMode.Create, true))
+                    using (var mashupZipArchive = new ZipArchive(zipStream, ZipArchiveMode.Create, true))
                     {
                         var order = _fileSystem.File.ReadAllLines(Path.Combine(vcsdir, ".zo"));
                         foreach (var name in order)
                         {
                             var converter = FindConverter(name);
-                            converter.WriteVcsToRaw(Path.Combine(vcsdir, name.Replace('/', '\\')), name.Replace('/', '\\'), zip);
+                            var mashupZipEntry = mashupZipArchive.CreateEntry(name.Replace('/', '\\'), CompressionLevel.Optimal);
+                            using (var mashupStream = mashupZipEntry.Open())
+                            {
+                                converter.WriteVcsToRaw(Path.Combine(vcsdir, name.Replace('/', '\\')), mashupStream);
+                            }
                         }
                     }
 
@@ -111,15 +114,19 @@ namespace PowerBi
                     //write zip
                     zipStream.Flush();
                     zipStream.Seek(0, SeekOrigin.Begin);
-                    zipStream.WriteTo(stream);
+                    writer.Write((int)zipStream.Length);
+                    zipStream.WriteTo(zipEntryStream);
                 }
 
                 using (var xmlStream1 = new MemoryStream())
                 {
                     using (var file = _fileSystem.File.Open(Path.Combine(vcsdir, "3.xml"), FileMode.Open))
                     {
-                        var xmlb = new XMLConverter(Encoding.UTF8, _fileSystem, false).VcsToRaw(file);
+                        var xmlb = new XMLConverter(new UTF8Encoding(true), _fileSystem, false).VcsToRaw(file);
+                        //xmlb.Length
+                        xmlb.Seek(0, SeekOrigin.Begin);
                         xmlb.CopyTo(xmlStream1);
+                        xmlStream1.Seek(0, SeekOrigin.Begin);
                     }
 
                     writer.Write((int)xmlStream1.Length);
@@ -130,7 +137,7 @@ namespace PowerBi
                 {
                     using (var file = _fileSystem.File.Open(Path.Combine(vcsdir, "6.xml"), FileMode.Open))
                     {
-                        using (var xmlb = new XMLConverter(Encoding.UTF8, _fileSystem, false).VcsToRaw(file))
+                        using (var xmlb = new XMLConverter(new UTF8Encoding(false), _fileSystem, false).VcsToRaw(file))
                         {
                             xmlb.CopyTo(xmlStream2);
                         }
@@ -141,7 +148,7 @@ namespace PowerBi
                     writer.Write(xmlStream2.ToArray());
                 }
 
-            new NoopConverter(_fileSystem).WriteVcsToRaw(Path.Combine(vcsdir, "7.bytes"), "7.bytes", zipFile);
+                new NoopConverter(_fileSystem).WriteVcsToRaw(Path.Combine(vcsdir, "7.bytes"), zipEntryStream);
             }            
         }
 
@@ -199,14 +206,14 @@ namespace PowerBi
 
                     using (var xmlStream1 = new MemoryStream(xml1))
                     {
-                        var xmlString1 = new XMLConverter(Encoding.UTF8, _fileSystem, false).WriteRawToConsoleText(xmlStream1);
+                        var xmlString1 = new XMLConverter(new UTF8Encoding(false), _fileSystem, false).WriteRawToConsoleText(xmlStream1);
                         stringBuilder.AppendLine("DataMashup -> XML Block 1");
                         stringBuilder.AppendLine(xmlString1);
                     }
 
                     using (var xmlStream2 = new MemoryStream(xml2))
                     {
-                        var xmlString2 = new XMLConverter(Encoding.UTF8, _fileSystem, false).WriteRawToConsoleText(xmlStream2);
+                        var xmlString2 = new XMLConverter(new UTF8Encoding(false), _fileSystem, false).WriteRawToConsoleText(xmlStream2);
                         stringBuilder.AppendLine("DataMashup -> XML Block 2");
                         stringBuilder.AppendLine(xmlString2);
                     }
